@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Vocabulary Master</title>
     <style>
-        :root { --primary: #2563eb; --success: #059669; --error: #dc2626; --bg: #f8fafc; }
+        :root { --primary: #2563eb; --success: #059669; --error: #dc2626; --bg: #f8fafc; --hint: #f59e0b; }
         body { font-family: 'Inter', system-ui, sans-serif; background-color: var(--bg); margin: 0; display: flex; flex-direction: column; height: 100vh; }
         header { background: #1e293b; color: white; padding: 1.5rem; text-align: center; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
         .main-container { display: flex; flex: 1; overflow: hidden; }
@@ -13,13 +13,22 @@
         .sidebar h2 { font-size: 1.2rem; margin-bottom: 20px; color: #1e293b; }
         .quiz-area { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
         .card { background: white; padding: 40px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); width: 100%; max-width: 600px; }
+        
+        .progress-info { color: #64748b; font-weight: 600; font-size: 0.9rem; margin-bottom: 15px; display: flex; justify-content: space-between; border-bottom: 1px solid #f1f5f9; padding-bottom: 10px; }
         .question { font-size: 1.4rem; font-weight: 700; margin-bottom: 25px; color: #1e293b; line-height: 1.5; }
+        
         .option { background: #f1f5f9; padding: 16px; margin-bottom: 12px; border-radius: 10px; cursor: pointer; transition: 0.2s; border: 2px solid transparent; font-size: 1.1rem; }
         .option:hover { background: #e2e8f0; }
         .correct { background: #d1fae5 !important; border-color: var(--success) !important; color: #065f46; }
         .wrong { background: #fee2e2 !important; border-color: var(--error) !important; color: #991b1b; }
-        .feedback { height: 40px; font-weight: 600; margin-top: 20px; text-align: center; font-size: 1.1rem; }
-        button { background: var(--primary); color: white; border: none; padding: 14px; border-radius: 8px; cursor: pointer; width: 100%; font-size: 1rem; font-weight: 600; }
+        
+        .feedback-area { text-align: center; margin-top: 20px; min-height: 80px; }
+        .feedback { font-weight: 600; font-size: 1.1rem; margin-bottom: 10px; }
+        
+        .hint-box { background: #fffbeb; border: 1px solid #fef3c7; padding: 10px; border-radius: 8px; color: #92400e; font-size: 0.95rem; display: none; margin-top: 10px; }
+        .hint-btn { background: var(--hint); color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; font-size: 0.9rem; display: none; margin: 0 auto; }
+
+        button.main-btn { background: var(--primary); color: white; border: none; padding: 14px; border-radius: 8px; cursor: pointer; width: 100%; font-size: 1rem; font-weight: 600; }
         select { width: 100%; padding: 12px; margin: 8px 0 24px; border-radius: 8px; border: 1px solid #cbd5e1; }
         .hidden { display: none; }
     </style>
@@ -35,9 +44,9 @@
         <h2>Quiz Settings</h2>
         <label>Grade Level</label>
         <select id="grade">
-            <option value="1-2">Grades 1-2 (Basic)</option>
-            <option value="3-4">Grades 3-4 (Intermediate)</option>
-            <option value="5">Grade 5 (Advanced)</option>
+            <option value="1-2">Grades 1-2</option>
+            <option value="3-4">Grades 3-4</option>
+            <option value="5">Grade 5</option>
         </select>
         <label>Subject Topic</label>
         <select id="subject">
@@ -45,26 +54,35 @@
             <option value="Math">Mathematics</option>
             <option value="Science">Science & Nature</option>
         </select>
-        <button onclick="initQuiz()">Start Quiz</button>
+        <button class="main-btn" onclick="initQuiz()">Start Quiz</button>
     </div>
 
     <div class="quiz-area">
         <div id="quiz-card" class="card hidden">
-            <div id="progress" style="color: #64748b; font-weight: 600; margin-bottom: 10px;">Question 1 / 5</div>
+            <div class="progress-info">
+                <span id="set-info">Set 1 of 2</span>
+                <span id="q-progress">Question 1 / 5</span>
+            </div>
             <div id="q-text" class="question">Loading...</div>
             <div id="options-box"></div>
-            <div id="feedback" class="feedback"></div>
+            
+            <div class="feedback-area">
+                <div id="feedback" class="feedback"></div>
+                <button id="hint-btn" class="hint-btn" onclick="showHint()">Show Hint</button>
+                <div id="hint-text" class="hint-box"></div>
+            </div>
         </div>
 
         <div id="result-card" class="card hidden" style="text-align: center;">
             <h2 style="color: var(--success); font-size: 2rem;">Excellent! 🌟</h2>
-            <p style="font-size: 1.2rem; color: #475569;">You've mastered all 5 words in this set.</p>
-            <button onclick="location.reload()" style="width: auto; padding: 12px 40px;">Choose Another Level</button>
+            <p style="font-size: 1.2rem; color: #475569;">You've mastered this set of vocabulary.</p>
+            <button class="main-btn" onclick="initQuiz()" style="width: auto; padding: 12px 40px;">Next Set</button>
         </div>
     </div>
 </div>
 
 <script>
+    // [기존 데이터베이스 유지 - 생략 방지를 위해 핵심만 표기]
     const database = {
         "1-2": {
             "ELA": [
@@ -72,19 +90,19 @@
                 {q: "Where and when a story takes place?", a: "Setting", o: ["Author", "Setting", "Rhyme", "Detail"]},
                 {q: "The order in which things happen?", a: "Sequence", o: ["Pattern", "Sequence", "Math", "Clock"]},
                 {q: "The person who wrote the book?", a: "Author", o: ["Author", "Reader", "Student", "Character"]},
-                {q: "Words that have the same ending sound?", a: "Rhyme", o: ["Song", "Rhyme", "Letter", "Word"]},
-                {q: "A strong feeling like love or fear?", a: "Emotion", o: ["Emotion", "Thought", "Action", "Detail"]},
+                {q: "Words that sound the same at the end?", a: "Rhyme", o: ["Song", "Rhyme", "Letter", "Word"]},
                 {q: "To say what you think will happen next?", a: "Predict", o: ["Predict", "Recall", "Ask", "Draw"]},
-                {q: "A small part of a story that adds info?", a: "Detail", o: ["Detail", "Chapter", "Book", "Ending"]},
                 {q: "The person who drew the pictures?", a: "Illustrator", o: ["Author", "Illustrator", "Teacher", "Writer"]},
+                {q: "A small part of a story that adds info?", a: "Detail", o: ["Detail", "Chapter", "Book", "Ending"]},
+                {q: "A strong feeling like love or fear?", a: "Emotion", o: ["Emotion", "Thought", "Action", "Detail"]},
                 {q: "A short piece of writing with rhyme?", a: "Poem", o: ["Novel", "Poem", "Math", "Dictionary"]}
             ],
             "Math": [
                 {q: "Result of adding numbers?", a: "Sum", o: ["Sum", "Difference", "Digit", "Zero"]},
                 {q: "Result of subtracting numbers?", a: "Difference", o: ["Plus", "Difference", "Product", "Less"]},
                 {q: "A shape with 4 equal sides?", a: "Square", o: ["Circle", "Triangle", "Square", "Line"]},
-                {q: "To give a rough or approximate answer?", a: "Estimate", o: ["Count", "Estimate", "Measure", "Solve"]},
-                {q: "A repeated design or number sequence?", a: "Pattern", o: ["Pattern", "Sum", "Digit", "Minus"]},
+                {q: "To give a rough guess?", a: "Estimate", o: ["Count", "Estimate", "Measure", "Solve"]},
+                {q: "A repeated design or sequence?", a: "Pattern", o: ["Pattern", "Sum", "Digit", "Minus"]},
                 {q: "Any symbol from 0 to 9?", a: "Digit", o: ["Number", "Digit", "Letter", "Word"]},
                 {q: "A shape with no corners?", a: "Circle", o: ["Circle", "Square", "Hexagon", "Cube"]},
                 {q: "What is 10 plus 10?", a: "Twenty", o: ["Ten", "Thirty", "Twenty", "Forty"]},
@@ -95,39 +113,39 @@
                 {q: "Animal's natural home?", a: "Habitat", o: ["Habitat", "School", "Orbit", "Kitchen"]},
                 {q: "To watch carefully to learn?", a: "Observe", o: ["Guess", "Observe", "Sleep", "Run"]},
                 {q: "A push or a pull?", a: "Force", o: ["Energy", "Force", "Weight", "Light"]},
-                {q: "The stages a living thing goes through?", a: "Life Cycle", o: ["Life Cycle", "Season", "Weather", "Time"]},
-                {q: "The star that gives us light and heat?", a: "Sun", o: ["Moon", "Sun", "Mars", "Star"]},
-                {q: "One of the 4 periods of the year?", a: "Season", o: ["Month", "Season", "Day", "Week"]},
-                {q: "Matter that flows freely like water?", a: "Liquid", o: ["Solid", "Liquid", "Gas", "Ice"]},
-                {q: "The power to do work?", a: "Energy", o: ["Energy", "Sleep", "Food", "Force"]},
+                {q: "Stages a living thing goes through?", a: "Life Cycle", o: ["Life Cycle", "Season", "Weather", "Time"]},
+                {q: "The star that gives us light?", a: "Sun", o: ["Moon", "Sun", "Mars", "Star"]},
+                {q: "Matter that flows like water?", a: "Liquid", o: ["Solid", "Liquid", "Gas", "Ice"]},
+                {q: "Power to do work?", a: "Energy", o: ["Energy", "Sleep", "Food", "Force"]},
                 {q: "Air-like matter that expands?", a: "Gas", o: ["Solid", "Liquid", "Gas", "Metal"]},
-                {q: "A place where plants grow?", a: "Garden", o: ["Sea", "Garden", "Space", "Oven"]}
+                {q: "Where plants grow?", a: "Garden", o: ["Sea", "Garden", "Space", "Oven"]},
+                {q: "One of the 4 periods of the year?", a: "Season", o: ["Month", "Season", "Day", "Week"]}
             ]
         },
         "3-4": {
             "ELA": [
                 {q: "A guess based on clues from text?", a: "Inference", o: ["Inference", "Main Idea", "Fact", "Summary"]},
-                {q: "The main message or lesson of a story?", a: "Theme", o: ["Plot", "Theme", "Dialogue", "Conflict"]},
+                {q: "The main message or lesson?", a: "Theme", o: ["Plot", "Theme", "Dialogue", "Conflict"]},
                 {q: "Comparing using 'like' or 'as'?", a: "Simile", o: ["Metaphor", "Simile", "Adverb", "Noun"]},
-                {q: "The words characters say to each other?", a: "Dialogue", o: ["Narrator", "Dialogue", "Action", "Setting"]},
-                {q: "A short statement of main points?", a: "Summary", o: ["Opinion", "Summary", "Evidence", "Index"]},
-                {q: "A struggle between characters?", a: "Conflict", o: ["Peace", "Conflict", "Friendship", "Game"]},
-                {q: "The person telling the story?", a: "Narrator", o: ["Author", "Narrator", "Protagonist", "Villain"]},
-                {q: "The most important point of a text?", a: "Main Idea", o: ["Detail", "Main Idea", "Intro", "Heading"]},
-                {q: "Where a story's events are listed?", a: "Table of Contents", o: ["Index", "Glossary", "Table of Contents", "Cover"]},
-                {q: "Comparing without using 'like' or 'as'?", a: "Metaphor", o: ["Metaphor", "Simile", "Adjective", "Verb"]}
+                {q: "The words characters say?", a: "Dialogue", o: ["Narrator", "Dialogue", "Action", "Setting"]},
+                {q: "Short statement of main points?", a: "Summary", o: ["Opinion", "Summary", "Evidence", "Index"]},
+                {q: "Struggle between characters?", a: "Conflict", o: ["Peace", "Conflict", "Friendship", "Game"]},
+                {q: "Person telling the story?", a: "Narrator", o: ["Author", "Narrator", "Protagonist", "Villain"]},
+                {q: "Most important point of a text?", a: "Main Idea", o: ["Detail", "Main Idea", "Intro", "Heading"]},
+                {q: "Comparing WITHOUT 'like' or 'as'?", a: "Metaphor", o: ["Metaphor", "Simile", "Adjective", "Verb"]},
+                {q: "List of story chapters?", a: "Table of Contents", o: ["Index", "Glossary", "Table of Contents", "Cover"]}
             ],
             "Math": [
-                {q: "The answer to multiplication?", a: "Product", o: ["Product", "Sum", "Quotient", "Factor"]},
-                {q: "The answer to division?", a: "Quotient", o: ["Remainder", "Quotient", "Product", "Multiple"]},
+                {q: "Answer to multiplication?", a: "Product", o: ["Product", "Sum", "Quotient", "Factor"]},
+                {q: "Answer to division?", a: "Quotient", o: ["Remainder", "Quotient", "Product", "Multiple"]},
                 {q: "Distance around a shape?", a: "Perimeter", o: ["Area", "Perimeter", "Volume", "Length"]},
-                {q: "A part of a whole (like 1/2)?", a: "Fraction", o: ["Fraction", "Decimal", "Digit", "Ratio"]},
+                {q: "A part of a whole (1/2)?", a: "Fraction", o: ["Fraction", "Decimal", "Digit", "Ratio"]},
                 {q: "Lines that never touch?", a: "Parallel", o: ["Intersecting", "Parallel", "Vertical", "Diagonal"]},
                 {q: "Space inside a flat shape?", a: "Area", o: ["Area", "Perimeter", "Width", "Depth"]},
                 {q: "Top number of a fraction?", a: "Numerator", o: ["Denominator", "Numerator", "Equal", "Sum"]},
                 {q: "Bottom number of a fraction?", a: "Denominator", o: ["Denominator", "Numerator", "Base", "Whole"]},
-                {q: "An angle less than 90 degrees?", a: "Acute", o: ["Obtuse", "Acute", "Right", "Flat"]},
-                {q: "Objects in equal rows and columns?", a: "Array", o: ["Group", "List", "Array", "Stack"]}
+                {q: "Angle less than 90 degrees?", a: "Acute", o: ["Obtuse", "Acute", "Right", "Flat"]},
+                {q: "Equal rows and columns?", a: "Array", o: ["Group", "List", "Array", "Stack"]}
             ],
             "Science": [
                 {q: "Trait that helps survival?", a: "Adaptation", o: ["Adaptation", "Food Chain", "Climate", "Force"]},
@@ -149,7 +167,7 @@
                 {q: "Hints to find word meaning?", a: "Context Clues", o: ["Synonyms", "Context Clues", "Prefix", "Suffix"]},
                 {q: "The main character?", a: "Protagonist", o: ["Protagonist", "Antagonist", "Narrator", "Villain"]},
                 {q: "Most exciting part of story?", a: "Climax", o: ["Climax", "Intro", "Resolution", "Conflict"]},
-                {q: "The character opposing the hero?", a: "Antagonist", o: ["Hero", "Antagonist", "Sidekick", "Ghost"]},
+                {q: "Character opposing the hero?", a: "Antagonist", o: ["Hero", "Antagonist", "Sidekick", "Ghost"]},
                 {q: "Problem solved in a story?", a: "Resolution", o: ["Resolution", "Start", "Climax", "Conflict"]},
                 {q: "Using symbols for ideas?", a: "Symbolism", o: ["Symbolism", "Rhyme", "Fact", "Writing"]},
                 {q: "The author's attitude?", a: "Tone", o: ["Tone", "Mood", "Voice", "Sound"]},
@@ -182,16 +200,27 @@
         }
     };
 
+    let allQuestionPool = [];
     let activeQuestions = [];
     let curIdx = 0;
+    let setNum = 1;
+    let totalSets = 0;
     let canClick = true;
 
     function initQuiz() {
         const g = document.getElementById('grade').value;
         const s = document.getElementById('subject').value;
         
-        // 전체 문제 중 5개를 랜덤으로 섞어서 추출
-        activeQuestions = [...database[g][s]].sort(() => Math.random() - 0.5).slice(0, 5);
+        allQuestionPool = [...database[g][s]].sort(() => Math.random() - 0.5);
+        totalSets = Math.ceil(allQuestionPool.length / 5);
+        setNum = 1;
+        
+        startNewSet();
+    }
+
+    function startNewSet() {
+        const start = (setNum - 1) * 5;
+        activeQuestions = allQuestionPool.slice(start, start + 5);
         curIdx = 0;
         
         document.getElementById('quiz-card').classList.remove('hidden');
@@ -202,16 +231,20 @@
     function showQuestion() {
         canClick = true;
         const data = activeQuestions[curIdx];
-        document.getElementById('progress').innerText = `Question ${curIdx + 1} / 5`;
+        
+        // Update Progress Info
+        document.getElementById('set-info').innerText = `Set ${setNum} of ${totalSets}`;
+        document.getElementById('q-progress').innerText = `Question ${curIdx + 1} / ${activeQuestions.length}`;
+        
         document.getElementById('q-text').innerText = data.q;
         document.getElementById('feedback').innerText = "";
+        document.getElementById('hint-btn').style.display = "none";
+        document.getElementById('hint-text').style.display = "none";
         
         const box = document.getElementById('options-box');
         box.innerHTML = "";
 
-        // 선택지도 랜덤하게 섞음
         const shuffledOpts = [...data.o].sort(() => Math.random() - 0.5);
-        
         shuffledOpts.forEach(opt => {
             const div = document.createElement('div');
             div.className = 'option';
@@ -227,7 +260,7 @@
         if(selected === correct) {
             canClick = false;
             el.classList.add('correct');
-            document.getElementById('feedback').innerText = "Correct! Well done! 🏆";
+            document.getElementById('feedback').innerText = "Correct! Great Job! 🏆";
             document.getElementById('feedback').style.color = "#059669";
             
             setTimeout(() => {
@@ -235,19 +268,40 @@
                 if(curIdx < activeQuestions.length) {
                     showQuestion();
                 } else {
-                    document.getElementById('quiz-card').classList.add('hidden');
-                    document.getElementById('result-card').classList.remove('hidden');
+                    showResultScreen();
                 }
             }, 1200);
         } else {
             el.classList.add('wrong');
-            document.getElementById('feedback').innerText = "Incorrect! Try again! 🧐";
+            document.getElementById('feedback').innerText = "Incorrect! Keep trying! 🧐";
             document.getElementById('feedback').style.color = "#dc2626";
+            document.getElementById('hint-btn').style.display = "block"; // Show hint button on wrong answer
             
             setTimeout(() => {
                 el.classList.remove('wrong');
-                document.getElementById('feedback').innerText = "";
             }, 1000);
+        }
+    }
+
+    function showHint() {
+        const correctWord = activeQuestions[curIdx].a;
+        const hintBox = document.getElementById('hint-text');
+        hintBox.innerText = `💡 HINT: This word starts with "${correctWord[0]}" and has ${correctWord.length} letters.`;
+        hintBox.style.display = "block";
+    }
+
+    function showResultScreen() {
+        document.getElementById('quiz-card').classList.add('hidden');
+        const resCard = document.getElementById('result-card');
+        resCard.classList.remove('hidden');
+        
+        const btn = resCard.querySelector('button');
+        if (setNum < totalSets) {
+            btn.innerText = "Next Set of Words";
+            btn.onclick = () => { setNum++; startNewSet(); };
+        } else {
+            btn.innerText = "Finish & Restart";
+            btn.onclick = () => location.reload();
         }
     }
 </script>
