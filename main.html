@@ -3,171 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Master Vocab Quiz</title>
+    <title>Vocabulary Master</title>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, sans-serif; background-color: #f8f9fa; margin: 0; display: flex; flex-direction: column; height: 100vh; }
-        header { background-color: #2c3e50; color: white; padding: 1rem; text-align: center; }
-        .main-container { display: flex; flex: 1; }
-        .sidebar { width: 260px; background: white; padding: 25px; border-right: 1px solid #dee2e6; }
+        :root { --primary: #2563eb; --success: #059669; --error: #dc2626; --bg: #f8fafc; }
+        body { font-family: 'Inter', system-ui, sans-serif; background-color: var(--bg); margin: 0; display: flex; flex-direction: column; height: 100vh; }
+        header { background: #1e293b; color: white; padding: 1.5rem; text-align: center; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .main-container { display: flex; flex: 1; overflow: hidden; }
+        .sidebar { width: 300px; background: white; padding: 30px; border-right: 1px solid #e2e8f0; }
+        .sidebar h2 { font-size: 1.2rem; margin-bottom: 20px; color: #1e293b; }
         .quiz-area { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
-        
-        .card { background: white; padding: 40px; border-radius: 12px; box-shadow: 0 8px 30px rgba(0,0,0,0.1); width: 100%; max-width: 600px; text-align: center; }
-        .question { font-size: 1.5rem; font-weight: bold; margin-bottom: 25px; color: #34495e; min-height: 80px; }
-        .option { background: #f1f3f5; padding: 15px; margin-bottom: 10px; border-radius: 8px; cursor: pointer; transition: 0.3s; font-size: 1.1rem; border: 2px solid transparent; }
-        .option:hover { background: #e9ecef; }
-        
-        /* State Colors */
-        .correct { background: #d4edda !important; border-color: #28a745 !important; color: #155724; }
-        .wrong { background: #f8d7da !important; border-color: #dc3545 !important; color: #721c24; }
-        
-        .feedback { font-size: 1.2rem; font-weight: bold; margin-top: 20px; height: 30px; }
-        .hidden { display: none; }
-        button { background: #3498db; color: white; border: none; padding: 12px 25px; border-radius: 5px; cursor: pointer; font-size: 1rem; }
-        select { width: 100%; padding: 10px; margin: 10px 0 20px; border-radius: 5px; }
-    </style>
-</head>
-<body>
-
-<header>
-    <h1>Vocab Master Pro</h1>
-</header>
-
-<div class="main-container">
-    <div class="sidebar">
-        <label>Grade Level</label>
-        <select id="grade">
-            <option value="1-2">Grades 1-2</option>
-            <option value="3-4">Grades 3-4</option>
-            <option value="5">Grade 5</option>
-        </select>
-        <label>Subject</label>
-        <select id="subject">
-            <option value="ELA">Literature</option>
-            <option value="Math">Math</option>
-            <option value="Science">Science</option>
-        </select>
-        <button onclick="initQuiz()">Start Quiz</button>
-    </div>
-
-    <div class="quiz-area">
-        <div id="quiz-card" class="card hidden">
-            <div id="progress" style="color: #7f8c8d; margin-bottom: 10px;">Question 1 / 5</div>
-            <div id="q-text" class="question">Question goes here?</div>
-            <div id="options-box"></div>
-            <div id="feedback" class="feedback"></div>
-        </div>
-
-        <div id="result-card" class="card hidden">
-            <h2 style="color: #27ae60;">Congratulations! 🎉</h2>
-            <p>You have successfully completed all 5 questions.</p>
-            <button onclick="location.reload()">Restart</button>
-        </div>
-    </div>
-</div>
-
-<script>
-    const database = {
-        "1-2": {
-            "ELA": [
-                {q: "Where a story happens?", a: "Setting", o: ["Setting", "Plot", "Author", "Character"]},
-                {q: "A person in a story?", a: "Character", o: ["Title", "Page", "Character", "Pen"]},
-                {q: "The person who writes the book?", a: "Author", o: ["Reader", "Author", "Teacher", "Pilot"]},
-                {q: "The name of a book?", a: "Title", o: ["Title", "Word", "Paper", "End"]},
-                {q: "Words that sound the same at the end?", a: "Rhyme", o: ["Song", "Rhyme", "Math", "Talk"]}
-            ],
-            "Math": [
-                {q: "Result of adding numbers?", a: "Sum", o: ["Sum", "Minus", "Pattern", "Zero"]},
-                {q: "A shape with 3 sides?", a: "Triangle", o: ["Square", "Circle", "Triangle", "Star"]},
-                {q: "Opposite of addition?", a: "Subtraction", o: ["Counting", "Sum", "Subtraction", "Plus"]},
-                {q: "To give a rough guess?", a: "Estimate", o: ["Count", "Estimate", "Measure", "Solve"]},
-                {q: "What is 10 + 5?", a: "Fifteen", o: ["Twelve", "Fifteen", "Ten", "Twenty"]}
-            ],
-            "Science": [
-                {q: "Animal's natural home?", a: "Habitat", o: ["School", "Habitat", "Space", "Cloud"]},
-                {q: "Ice is a state of matter called...?", a: "Solid", o: ["Solid", "Liquid", "Gas", "Heat"]},
-                {q: "The star that gives us light?", a: "Sun", o: ["Moon", "Sun", "Mars", "Earth"]},
-                {q: "A push or a pull?", a: "Force", o: ["Force", "Sleep", "Food", "Light"]},
-                {q: "Process of a seed growing?", a: "Germination", o: ["Eating", "Sleeping", "Germination", "Falling"]}
-            ]
-        }
-        // ... Grades 3-5 can be added similarly
-    };
-
-    let activeQuestions = [];
-    let curIdx = 0;
-    let canClick = true;
-
-    function initQuiz() {
-        const g = document.getElementById('grade').value;
-        const s = document.getElementById('subject').value;
-        
-        if(!database[g] || !database[g][s]) {
-            alert("Coming soon! Please try Grade 1-2.");
-            return;
-        }
-
-        // Shuffle questions and select top 5
-        activeQuestions = [...database[g][s]].sort(() => Math.random() - 0.5).slice(0, 5);
-        curIdx = 0;
-        
-        document.getElementById('quiz-card').classList.remove('hidden');
-        document.getElementById('result-card').classList.add('hidden');
-        showQuestion();
-    }
-
-    function showQuestion() {
-        canClick = true;
-        const data = activeQuestions[curIdx];
-        document.getElementById('progress').innerText = `Question ${curIdx + 1} / 5`;
-        document.getElementById('q-text').innerText = data.q;
-        document.getElementById('feedback').innerText = "";
-        
-        const box = document.getElementById('options-box');
-        box.innerHTML = "";
-
-        // Shuffle options
-        const shuffledOpts = [...data.o].sort(() => Math.random() - 0.5);
-        
-        shuffledOpts.forEach(opt => {
-            const div = document.createElement('div');
-            div.className = 'option';
-            div.innerText = opt;
-            div.onclick = () => check(div, opt, data.a);
-            box.appendChild(div);
-        });
-    }
-
-    function check(el, selected, correct) {
-        if(!canClick) return;
-
-        if(selected === correct) {
-            canClick = false;
-            el.classList.add('correct');
-            document.getElementById('feedback').innerText = "✅ Correct! Moving on...";
-            document.getElementById('feedback').style.color = "#27ae60";
-            
-            setTimeout(() => {
-                curIdx++;
-                if(curIdx < activeQuestions.length) {
-                    showQuestion();
-                } else {
-                    document.getElementById('quiz-card').classList.add('hidden');
-                    document.getElementById('result-card').classList.remove('hidden');
-                }
-            }, 1500);
-        } else {
-            el.classList.add('wrong');
-            document.getElementById('feedback').innerText = "❌ Incorrect! Try again.";
-            document.getElementById('feedback').style.color = "#e74c3c";
-            
-            // Allow retry after a short delay
-            setTimeout(() => {
-                el.classList.remove('wrong');
-                document.getElementById('feedback').innerText = "";
-            }, 1000);
-        }
-    }
-</script>
-
-</body>
-</html>
+        .card { background: white; padding: 40px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); width: 100%; max-width: 600px; }
+        .question { font-size: 1.4rem; font-weight: 700; margin-bottom: 25px; color: #1e293b; line-height: 1.5; }
+        .option { background: #f1f5f9; padding: 16px; margin-bottom: 12px; border-radius: 10px; cursor: pointer; transition: 0.2s; border: 2px solid transparent; font-size: 1.1rem; }
+        .option:hover { background: #e2e8f0; }
+        .correct { background: #d1fae5 !important; border-color: var(--success) !important; color: #065f46; }
+        .wrong { background: #fee2e2 !important; border-color: var(--error) !important; color
