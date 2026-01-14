@@ -5,28 +5,35 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Vocabulary Master</title>
     <style>
-        :root { --primary: #2563eb; --success: #059669; --error: #dc2626; --bg: #f8fafc; --hint: #f59e0b; }
+        :root { --primary: #2563eb; --success: #059669; --error: #dc2626; --bg: #f8fafc; --text-main: #1e293b; --text-sub: #64748b; }
         body { font-family: 'Inter', system-ui, sans-serif; background-color: var(--bg); margin: 0; display: flex; flex-direction: column; height: 100vh; }
-        header { background: #1e293b; color: white; padding: 1.5rem; text-align: center; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        header { background: #1e293b; color: white; padding: 1.5rem; text-align: center; }
+        
         .main-container { display: flex; flex: 1; overflow: hidden; }
         .sidebar { width: 300px; background: white; padding: 30px; border-right: 1px solid #e2e8f0; }
-        .sidebar h2 { font-size: 1.2rem; margin-bottom: 20px; color: #1e293b; }
+        .sidebar h2 { font-size: 1.2rem; margin-bottom: 20px; color: var(--text-main); }
+        
         .quiz-area { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
-        .card { background: white; padding: 40px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); width: 100%; max-width: 600px; }
+        .card { background: white; padding: 40px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); width: 100%; max-width: 600px; position: relative; }
         
-        .progress-info { color: #64748b; font-weight: 600; font-size: 0.9rem; margin-bottom: 15px; display: flex; justify-content: space-between; border-bottom: 1px solid #f1f5f9; padding-bottom: 10px; }
-        .question { font-size: 1.4rem; font-weight: 700; margin-bottom: 25px; color: #1e293b; line-height: 1.5; }
+        /* Progress Info */
+        .progress-info { color: var(--text-sub); font-weight: 600; font-size: 0.9rem; margin-bottom: 15px; display: flex; justify-content: space-between; border-bottom: 1px solid #f1f5f9; padding-bottom: 10px; }
         
+        /* Question & Options */
+        .question { font-size: 1.4rem; font-weight: 700; margin-bottom: 25px; color: var(--text-main); line-height: 1.5; }
         .option { background: #f1f5f9; padding: 16px; margin-bottom: 12px; border-radius: 10px; cursor: pointer; transition: 0.2s; border: 2px solid transparent; font-size: 1.1rem; }
         .option:hover { background: #e2e8f0; }
         .correct { background: #d1fae5 !important; border-color: var(--success) !important; color: #065f46; }
         .wrong { background: #fee2e2 !important; border-color: var(--error) !important; color: #991b1b; }
         
-        .feedback-area { text-align: center; margin-top: 20px; min-height: 80px; }
-        .feedback { font-weight: 600; font-size: 1.1rem; margin-bottom: 10px; }
+        /* Feedback & Hint UI */
+        .bottom-area { margin-top: 20px; min-height: 60px; display: flex; flex-direction: column; }
+        .feedback { font-weight: 600; font-size: 1.1rem; text-align: center; margin-bottom: 15px; height: 24px; }
         
-        .hint-box { background: #fffbeb; border: 1px solid #fef3c7; padding: 10px; border-radius: 8px; color: #92400e; font-size: 0.95rem; display: none; margin-top: 10px; }
-        .hint-btn { background: var(--hint); color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; font-size: 0.9rem; display: none; margin: 0 auto; }
+        .hint-container { display: flex; flex-direction: column; align-items: flex-start; width: 100%; }
+        .hint-btn { background: none; border: none; color: var(--primary); font-weight: 600; font-size: 0.95rem; cursor: pointer; padding: 0; display: none; transition: 0.2s; }
+        .hint-btn:hover { color: #1d4ed8; text-decoration: underline; }
+        .hint-text { background: #fefce8; border-left: 4px solid #f59e0b; padding: 10px 15px; border-radius: 4px; color: #92400e; font-size: 0.9rem; display: none; margin-top: 10px; width: 95%; }
 
         button.main-btn { background: var(--primary); color: white; border: none; padding: 14px; border-radius: 8px; cursor: pointer; width: 100%; font-size: 1rem; font-weight: 600; }
         select { width: 100%; padding: 12px; margin: 8px 0 24px; border-radius: 8px; border: 1px solid #cbd5e1; }
@@ -63,26 +70,29 @@
                 <span id="set-info">Set 1 of 2</span>
                 <span id="q-progress">Question 1 / 5</span>
             </div>
+            
             <div id="q-text" class="question">Loading...</div>
             <div id="options-box"></div>
             
-            <div class="feedback-area">
+            <div class="bottom-area">
                 <div id="feedback" class="feedback"></div>
-                <button id="hint-btn" class="hint-btn" onclick="showHint()">Show Hint</button>
-                <div id="hint-text" class="hint-box"></div>
+                <div class="hint-container">
+                    <button id="hint-btn" class="hint-btn" onclick="showHint()">Need a hint? Click here ↓</button>
+                    <div id="hint-text" class="hint-text"></div>
+                </div>
             </div>
         </div>
 
         <div id="result-card" class="card hidden" style="text-align: center;">
             <h2 style="color: var(--success); font-size: 2rem;">Excellent! 🌟</h2>
-            <p style="font-size: 1.2rem; color: #475569;">You've mastered this set of vocabulary.</p>
-            <button class="main-btn" onclick="initQuiz()" style="width: auto; padding: 12px 40px;">Next Set</button>
+            <p id="result-msg" style="font-size: 1.2rem; color: #475569;">You've mastered this set.</p>
+            <button id="next-set-btn" class="main-btn" style="width: auto; padding: 12px 40px;">Next Set</button>
         </div>
     </div>
 </div>
 
 <script>
-    // [기존 데이터베이스 유지 - 생략 방지를 위해 핵심만 표기]
+    // [데이터베이스 - 이전과 동일하게 유지]
     const database = {
         "1-2": {
             "ELA": [
@@ -200,7 +210,7 @@
         }
     };
 
-    let allQuestionPool = [];
+    let allPool = [];
     let activeQuestions = [];
     let curIdx = 0;
     let setNum = 1;
@@ -211,8 +221,8 @@
         const g = document.getElementById('grade').value;
         const s = document.getElementById('subject').value;
         
-        allQuestionPool = [...database[g][s]].sort(() => Math.random() - 0.5);
-        totalSets = Math.ceil(allQuestionPool.length / 5);
+        allPool = [...database[g][s]].sort(() => Math.random() - 0.5);
+        totalSets = Math.ceil(allPool.length / 5);
         setNum = 1;
         
         startNewSet();
@@ -220,7 +230,7 @@
 
     function startNewSet() {
         const start = (setNum - 1) * 5;
-        activeQuestions = allQuestionPool.slice(start, start + 5);
+        activeQuestions = allPool.slice(start, start + 5);
         curIdx = 0;
         
         document.getElementById('quiz-card').classList.remove('hidden');
@@ -232,12 +242,12 @@
         canClick = true;
         const data = activeQuestions[curIdx];
         
-        // Update Progress Info
         document.getElementById('set-info').innerText = `Set ${setNum} of ${totalSets}`;
         document.getElementById('q-progress').innerText = `Question ${curIdx + 1} / ${activeQuestions.length}`;
-        
         document.getElementById('q-text').innerText = data.q;
         document.getElementById('feedback').innerText = "";
+        
+        // Reset Hint UI
         document.getElementById('hint-btn').style.display = "none";
         document.getElementById('hint-text').style.display = "none";
         
@@ -260,42 +270,43 @@
         if(selected === correct) {
             canClick = false;
             el.classList.add('correct');
-            document.getElementById('feedback').innerText = "Correct! Great Job! 🏆";
-            document.getElementById('feedback').style.color = "#059669";
+            document.getElementById('feedback').innerText = "Correct! Well done! 🏆";
+            document.getElementById('feedback').style.color = "var(--success)";
             
             setTimeout(() => {
                 curIdx++;
                 if(curIdx < activeQuestions.length) {
                     showQuestion();
                 } else {
-                    showResultScreen();
+                    showFinalResult();
                 }
             }, 1200);
         } else {
             el.classList.add('wrong');
-            document.getElementById('feedback').innerText = "Incorrect! Keep trying! 🧐";
-            document.getElementById('feedback').style.color = "#dc2626";
-            document.getElementById('hint-btn').style.display = "block"; // Show hint button on wrong answer
+            document.getElementById('feedback').innerText = "Not quite! Try again.";
+            document.getElementById('feedback').style.color = "var(--error)";
+            document.getElementById('hint-btn').style.display = "block"; // 힌트 버튼 유도
             
             setTimeout(() => {
                 el.classList.remove('wrong');
-            }, 1000);
+            }, 800);
         }
     }
 
     function showHint() {
-        const correctWord = activeQuestions[curIdx].a;
+        const ans = activeQuestions[curIdx].a;
         const hintBox = document.getElementById('hint-text');
-        hintBox.innerText = `💡 HINT: This word starts with "${correctWord[0]}" and has ${correctWord.length} letters.`;
+        hintBox.innerText = `💡 The word starts with "${ans[0]}" and has ${ans.length} letters.`;
         hintBox.style.display = "block";
+        document.getElementById('hint-btn').style.display = "none";
     }
 
-    function showResultScreen() {
+    function showFinalResult() {
         document.getElementById('quiz-card').classList.add('hidden');
         const resCard = document.getElementById('result-card');
         resCard.classList.remove('hidden');
         
-        const btn = resCard.querySelector('button');
+        const btn = document.getElementById('next-set-btn');
         if (setNum < totalSets) {
             btn.innerText = "Next Set of Words";
             btn.onclick = () => { setNum++; startNewSet(); };
