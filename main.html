@@ -12,11 +12,9 @@
         .sidebar { width: 300px; background: white; padding: 30px; border-right: 1px solid #e2e8f0; }
         .sidebar h2 { font-size: 1.2rem; margin-bottom: 20px; color: var(--text-main); }
         .quiz-area { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; position: relative; }
-        
         .score-board { position: absolute; top: 20px; right: 20px; background: white; padding: 10px 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; display: flex; gap: 15px; font-weight: 700; font-size: 1.1rem; }
         .score-correct { color: var(--success); }
         .score-wrong { color: var(--error); }
-
         .card { background: white; padding: 40px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); width: 100%; max-width: 600px; position: relative; }
         .progress-info { color: var(--text-sub); font-weight: 600; font-size: 0.9rem; margin-bottom: 15px; display: flex; justify-content: space-between; border-bottom: 1px solid #f1f5f9; padding-bottom: 10px; }
         .question { font-size: 1.4rem; font-weight: 700; margin-bottom: 25px; color: var(--text-main); line-height: 1.5; }
@@ -66,7 +64,7 @@
 
         <div id="quiz-card" class="card hidden">
             <div class="progress-info">
-                <span id="set-info">Set 1 of 3</span>
+                <span id="set-info">Set 1 of 1</span>
                 <span id="q-progress">Question 1 / 5</span>
             </div>
             <div id="q-text" class="question">Loading...</div>
@@ -82,38 +80,53 @@
 
         <div id="result-card" class="card hidden" style="text-align: center;">
             <h2 style="color: var(--success); font-size: 2rem;">Set Complete! 🌟</h2>
-            <p id="result-msg" style="font-size: 1.2rem; color: #475569;">You've mastered this set.</p>
+            <p id="result-msg" style="font-size: 1.2rem; color: #475569;">Great job mastering these words.</p>
             <button id="next-set-btn" class="main-btn" style="width: auto; padding: 12px 40px;">Next Set</button>
         </div>
     </div>
 </div>
 
 <script>
-// Database 생략 (v4.4와 동일한 풍성한 데이터가 포함됩니다)
-const database = { /* ... 위 응답의 데이터와 동일 ... */ }; 
-/* 데이터가 너무 길어 편의상 생략하지만, 실제 코드에서는 위 버전의 데이터를 그대로 넣어주시면 됩니다. */
+const database = {
+    "5": {
+        "ELA": [
+            {q: "Examine carefully to understand?", a: "Analyze", h: "To break something down into parts to study it.", o: ["Analyze", "Describe", "Memorize", "Read"]},
+            {q: "Facts that prove the truth?", a: "Evidence", h: "A detective looks for this to solve a case.", o: ["Opinion", "Evidence", "Topic", "Draft"]},
+            {q: "Most exciting part of story?", a: "Climax", h: "The 'peak' of the action mountain.", o: ["Climax", "Intro", "Theme", "Chapter"]},
+            {q: "The author's attitude in the text?", a: "Tone", h: "Is the writer being serious, funny, or angry?", o: ["Tone", "Mood", "Voice", "Plot"]},
+            {q: "The character opposing the hero?", a: "Antagonist", h: "Often the villain or the rival.", o: ["Antagonist", "Hero", "Ally", "Ghost"]},
+            {q: "A story about someone's life written by another?", a: "Biography", h: "A true story of a famous person.", o: ["Biography", "Fiction", "Poem", "Drama"]}
+        ],
+        "Math": [
+            {q: "Letter for unknown number?", a: "Variable", h: "Usually 'x' or 'y' in an equation.", o: ["Variable", "Constant", "Exponent", "Formula"]},
+            {q: "3D space an object occupies?", a: "Volume", h: "How much water a bottle can hold.", o: ["Area", "Volume", "Mass", "Perimeter"]},
+            {q: "Average of a set of numbers?", a: "Mean", h: "Add them up and divide by the count.", o: ["Mean", "Median", "Mode", "Range"]},
+            {q: "A fixed value that doesn't change?", a: "Constant", h: "Opposite of a variable.", o: ["Constant", "Variable", "Letter", "X"]},
+            {q: "Bottom number of a fraction?", a: "Denominator", h: "Tells the total number of parts.", o: ["Numerator", "Denominator", "Whole", "Sum"]}
+        ],
+        "Science": [
+            {q: "Tested educated guess?", a: "Hypothesis", h: "The start of a scientific experiment.", o: ["Conclusion", "Hypothesis", "Variable", "Data"]},
+            {q: "Plants making food from light?", a: "Photosynthesis", h: "Photo means 'light' and synthesis means 'making'.", o: ["Respiration", "Photosynthesis", "Digestion", "Solar"]},
+            {q: "Smallest block of life?", a: "Cell", h: "All living things are made of these.", o: ["Cell", "Atom", "Organ", "Tissue"]},
+            {q: "Anything that has mass and takes up space?", a: "Matter", h: "Solid, liquid, and gas are states of...", o: ["Matter", "Energy", "Void", "Sound"]},
+            {q: "Path around a star?", a: "Orbit", h: "The Earth's path around the Sun.", o: ["Orbit", "Axis", "Galaxy", "Rotation"]}
+        ]
+    },
+    "1-2": { "ELA": [{q:"Sample 1-2 Question", a:"Ans", h:"Hint", o:["Ans","W1","W2","W3"]}], "Math":[], "Science":[] },
+    "3-4": { "ELA": [{q:"Sample 3-4 Question", a:"Ans", h:"Hint", o:["Ans","W1","W2","W3"]}], "Math":[], "Science":[] }
+};
 
-let allPool = [];
-let activeQuestions = [];
-let curIdx = 0;
-let setNum = 1;
-let totalSets = 0;
-let canClick = true;
-
-// Score Variables
-let correctCount = 0;
-let wrongCount = 0;
-let hasMistakeInCurrentQuestion = false; // 현재 문제에서 틀린 적이 있는지 추적
+let allPool = [], activeQuestions = [], curIdx = 0, setNum = 1, totalSets = 0, canClick = true;
+let correctCount = 0, wrongCount = 0, hasMistakeInCurrentQuestion = false;
 
 function initQuiz() {
     const g = document.getElementById('grade').value;
     const s = document.getElementById('subject').value;
+    if(!database[g][s] || database[g][s].length === 0) { alert("Data coming soon for this level!"); return; }
+    
     allPool = [...database[g][s]].sort(() => Math.random() - 0.5);
     totalSets = Math.ceil(allPool.length / 5);
-    setNum = 1;
-    
-    correctCount = 0;
-    wrongCount = 0;
+    setNum = 1; correctCount = 0; wrongCount = 0;
     updateScoreUI();
     document.getElementById('score-board').classList.remove('hidden');
     startNewSet();
@@ -134,8 +147,7 @@ function startNewSet() {
 }
 
 function showQuestion() {
-    canClick = true;
-    hasMistakeInCurrentQuestion = false; // 새 문제 시작 시 오답 여부 초기화
+    canClick = true; hasMistakeInCurrentQuestion = false;
     const data = activeQuestions[curIdx];
     document.getElementById('set-info').innerText = `Set ${setNum} of ${totalSets}`;
     document.getElementById('q-progress').innerText = `Question ${curIdx + 1} / ${activeQuestions.length}`;
@@ -143,7 +155,6 @@ function showQuestion() {
     document.getElementById('feedback').innerText = "";
     document.getElementById('hint-btn').style.display = "none";
     document.getElementById('hint-text').style.display = "none";
-    
     const box = document.getElementById('options-box');
     box.innerHTML = "";
     [...data.o].sort(() => Math.random() - 0.5).forEach(opt => {
@@ -157,17 +168,10 @@ function showQuestion() {
 
 function check(el, selected, correct) {
     if(!canClick) return;
-    
     if(selected === correct) {
         canClick = false;
-        // 이 문제를 한 번도 틀리지 않고 맞췄을 때만 O 카운트
-        if (!hasMistakeInCurrentQuestion) {
-            correctCount++;
-        } else {
-            // 이미 틀렸던 문제라면 X 카운트는 이미 올라갔으므로 O는 올리지 않음
-        }
+        if (!hasMistakeInCurrentQuestion) correctCount++;
         updateScoreUI();
-        
         el.classList.add('correct');
         document.getElementById('feedback').innerText = "Correct! 🏆";
         document.getElementById('feedback').style.color = "var(--success)";
@@ -177,12 +181,7 @@ function check(el, selected, correct) {
             else showFinalResult();
         }, 1200);
     } else {
-        // 처음 틀렸을 때만 X 카운트 (한 문제당 X는 최대 1개)
-        if (!hasMistakeInCurrentQuestion) {
-            wrongCount++;
-            hasMistakeInCurrentQuestion = true;
-            updateScoreUI();
-        }
+        if (!hasMistakeInCurrentQuestion) { wrongCount++; hasMistakeInCurrentQuestion = true; updateScoreUI(); }
         el.classList.add('wrong');
         document.getElementById('feedback').innerText = "Try again!";
         document.getElementById('feedback').style.color = "var(--error)";
