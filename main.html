@@ -11,10 +11,7 @@
         .main-container { display: flex; flex: 1; overflow: hidden; }
         .sidebar { width: 300px; background: white; padding: 30px; border-right: 1px solid #e2e8f0; }
         .sidebar h2 { font-size: 1.2rem; margin-bottom: 20px; color: var(--text-main); }
-        .quiz-area { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; position: relative; }
-        .score-board { position: absolute; top: 20px; right: 20px; background: white; padding: 10px 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; display: flex; gap: 15px; font-weight: 700; font-size: 1.1rem; }
-        .score-correct { color: var(--success); }
-        .score-wrong { color: var(--error); }
+        .quiz-area { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
         .card { background: white; padding: 40px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); width: 100%; max-width: 600px; position: relative; }
         .progress-info { color: var(--text-sub); font-weight: 600; font-size: 0.9rem; margin-bottom: 15px; display: flex; justify-content: space-between; border-bottom: 1px solid #f1f5f9; padding-bottom: 10px; }
         .question { font-size: 1.4rem; font-weight: 700; margin-bottom: 25px; color: var(--text-main); line-height: 1.5; }
@@ -26,6 +23,7 @@
         .feedback { font-weight: 600; font-size: 1.1rem; text-align: center; margin-bottom: 10px; height: 24px; }
         .hint-container { display: flex; flex-direction: column; align-items: flex-start; width: 100%; }
         .hint-btn { background: none; border: none; color: var(--text-sub); font-weight: 600; font-size: 0.9rem; cursor: pointer; padding: 5px 0; display: none; text-decoration: underline; }
+        .hint-btn:hover { color: var(--text-main); }
         .hint-text { background: var(--gray-hint); border-left: 4px solid #cbd5e1; padding: 12px 15px; border-radius: 4px; color: #475569; font-size: 0.9rem; display: none; margin-top: 5px; width: 95%; line-height: 1.4; }
         button.main-btn { background: var(--primary); color: white; border: none; padding: 14px; border-radius: 8px; cursor: pointer; width: 100%; font-size: 1rem; font-weight: 600; }
         select { width: 100%; padding: 12px; margin: 8px 0 24px; border-radius: 8px; border: 1px solid #cbd5e1; }
@@ -57,14 +55,9 @@
     </div>
 
     <div class="quiz-area">
-        <div id="score-board" class="score-board hidden">
-            <span class="score-correct">O : <span id="count-o">0</span></span>
-            <span class="score-wrong">X : <span id="count-x">0</span></span>
-        </div>
-
         <div id="quiz-card" class="card hidden">
             <div class="progress-info">
-                <span id="set-info">Set 1 of 1</span>
+                <span id="set-info">Set 1 of 3</span>
                 <span id="q-progress">Question 1 / 5</span>
             </div>
             <div id="q-text" class="question">Loading...</div>
@@ -77,10 +70,9 @@
                 </div>
             </div>
         </div>
-
         <div id="result-card" class="card hidden" style="text-align: center;">
-            <h2 style="color: var(--success); font-size: 2rem;">Set Complete! 🌟</h2>
-            <p id="result-msg" style="font-size: 1.2rem; color: #475569;">Great job mastering these words.</p>
+            <h2 style="color: var(--success); font-size: 2rem;">Excellent! 🌟</h2>
+            <p id="result-msg" style="font-size: 1.2rem; color: #475569;">You've mastered this set.</p>
             <button id="next-set-btn" class="main-btn" style="width: auto; padding: 12px 40px;">Next Set</button>
         </div>
     </div>
@@ -88,53 +80,136 @@
 
 <script>
 const database = {
+    "1-2": {
+        "ELA": [
+            {q: "A person or animal in a story?", a: "Character", h: "Think about the people you meet in a book.", o: ["Character", "Setting", "Plot", "Author"]},
+            {q: "Where and when a story takes place?", a: "Setting", h: "Is it in a forest? In the future? That's the...", o: ["Author", "Setting", "Rhyme", "Detail"]},
+            {q: "The order in which things happen?", a: "Sequence", h: "First, second, third... this is the...", o: ["Pattern", "Sequence", "Math", "Clock"]},
+            {q: "The person who wrote the book?", a: "Author", h: "Look for this name on the front cover.", o: ["Author", "Reader", "Student", "Character"]},
+            {q: "Words that sound the same at the end?", a: "Rhyme", h: "Cat, hat, bat... these words...", o: ["Song", "Rhyme", "Letter", "Word"]},
+            {q: "A book that tells a fake story?", a: "Fiction", h: "This type of story comes from the author's imagination.", o: ["Fiction", "Fact", "Dictionary", "News"]},
+            {q: "The person who draws the pictures?", a: "Illustrator", h: "Look at the beautiful art made by the...", o: ["Author", "Illustrator", "Painter", "Poet"]},
+            {q: "What a book is mostly about?", a: "Topic", h: "If a book is about sharks, sharks are the...", o: ["Topic", "Page", "Cover", "Sound"]},
+            {q: "To say what will happen next?", a: "Predict", h: "Make a smart guess about the future of the story.", o: ["Predict", "Recall", "Ask", "Draw"]},
+            {q: "A very short story with a lesson?", a: "Fable", h: "Think of stories like 'The Tortoise and the Hare'.", o: ["Fable", "Journal", "List", "Title"]}
+        ],
+        "Math": [
+            {q: "Result of adding numbers?", a: "Sum", h: "Plus (+) leads to this answer.", o: ["Sum", "Difference", "Digit", "Zero"]},
+            {q: "Result of subtracting numbers?", a: "Difference", h: "How much more is one than the other?", o: ["Plus", "Difference", "Product", "Less"]},
+            {q: "A shape with 4 equal sides?", a: "Square", h: "All four sides are exactly the same length.", o: ["Circle", "Triangle", "Square", "Line"]},
+            {q: "To give a rough guess?", a: "Estimate", h: "You don't need the exact number, just a 'near' answer.", o: ["Count", "Estimate", "Measure", "Solve"]},
+            {q: "A shape with 3 sides?", a: "Triangle", h: "Try to count the three corners.", o: ["Square", "Circle", "Triangle", "Rectangle"]},
+            {q: "The number that comes after nine?", a: "Ten", h: "You have this many fingers on both hands.", o: ["Eight", "Ten", "Eleven", "Zero"]},
+            {q: "To break into equal groups?", a: "Divide", h: "Sharing cookies with friends is like this.", o: ["Add", "Subtract", "Divide", "Double"]},
+            {q: "A symbol used for counting?", a: "Number", h: "1, 2, 3... these are all...", o: ["Number", "Letter", "Picture", "Sound"]}
+        ],
+        "Science": [
+            {q: "Animal's natural home?", a: "Habitat", h: "A fish's is the ocean; a camel's is the desert.", o: ["Habitat", "School", "Orbit", "Kitchen"]},
+            {q: "To watch carefully to learn?", a: "Observe", h: "Use your eyes and ears like a scientist.", o: ["Guess", "Observe", "Sleep", "Run"]},
+            {q: "A push or a pull?", a: "Force", h: "You need this to move a heavy box.", o: ["Energy", "Force", "Weight", "Light"]},
+            {q: "Stages a living thing goes through?", a: "Life Cycle", h: "From seed to plant, or egg to frog.", o: ["Life Cycle", "Season", "Weather", "Time"]},
+            {q: "Water that falls from the sky?", a: "Rain", h: "You need an umbrella for this.", o: ["Rain", "Snow", "Wind", "Sun"]},
+            {q: "The center of our solar system?", a: "Sun", h: "It's a big, hot star that gives us light.", o: ["Sun", "Moon", "Earth", "Mars"]}
+        ]
+    },
+    "3-4": {
+        "ELA": [
+            {q: "A guess based on clues from text?", a: "Inference", h: "The author doesn't say it, but you 'know' it.", o: ["Inference", "Main Idea", "Fact", "Summary"]},
+            {q: "The main message or lesson?", a: "Theme", h: "What did the story teach us about life?", o: ["Plot", "Theme", "Dialogue", "Conflict"]},
+            {q: "Comparing using 'like' or 'as'?", a: "Simile", h: "'As brave as a lion' is a...", o: ["Metaphor", "Simile", "Adverb", "Noun"]},
+            {q: "Words characters speak?", a: "Dialogue", h: "Look for quotation marks (\" \") around these.", o: ["Dialogue", "Narrator", "Script", "Thought"]},
+            {q: "A struggle between characters?", a: "Conflict", h: "The 'problem' that needs to be solved.", o: ["Conflict", "Peace", "Ending", "Title"]},
+            {q: "Comparing WITHOUT 'like' or 'as'?", a: "Metaphor", h: "'You are my sunshine' is a...", o: ["Metaphor", "Simile", "Idiom", "Verb"]},
+            {q: "The person telling the story?", a: "Narrator", h: "This voice guides you through the book.", o: ["Narrator", "Author", "Villain", "Reader"]},
+            {q: "The most important part of a text?", a: "Main Idea", h: "What the whole story is mostly about.", o: ["Main Idea", "Detail", "Heading", "Index"]},
+            {q: "Using the same sound at the start?", a: "Alliteration", h: "'Peter Piper picked...' is an example.", o: ["Alliteration", "Rhyme", "Stanza", "Prose"]},
+            {q: "The feeling a story gives you?", a: "Mood", h: "Is the story spooky, happy, or sad?", o: ["Mood", "Tone", "Genre", "Plot"]}
+        ],
+        "Math": [
+            {q: "Answer to multiplication?", a: "Product", h: "Times (x) leads to this answer.", o: ["Product", "Sum", "Quotient", "Factor"]},
+            {q: "Answer to division?", a: "Quotient", h: "Shared or split equally into groups.", o: ["Remainder", "Quotient", "Product", "Multiple"]},
+            {q: "Distance around a shape?", a: "Perimeter", h: "The 'fence' around a yard.", o: ["Perimeter", "Area", "Volume", "Width"]},
+            {q: "Space inside a flat shape?", a: "Area", h: "Length times width equals this.", o: ["Area", "Perimeter", "Center", "Angle"]},
+            {q: "Lines that never touch?", a: "Parallel", h: "Like train tracks running side-by-side.", o: ["Parallel", "Perpendicular", "Zigzag", "Cross"]},
+            {q: "A part of a whole?", a: "Fraction", h: "1/2 or 3/4 are examples of this.", o: ["Fraction", "Whole", "Plus", "Digit"]},
+            {q: "Angle less than 90 degrees?", a: "Acute", h: "Think of a 'small and cute' angle.", o: ["Acute", "Obtuse", "Right", "Straight"]},
+            {q: "Angle more than 90 degrees?", a: "Obtuse", h: "A wide, large angle.", o: ["Obtuse", "Acute", "Right", "Flat"]},
+            {q: "Bottom number in a fraction?", a: "Denominator", h: "It tells you how many total parts there are.", o: ["Denominator", "Numerator", "Equal", "Sum"]},
+            {q: "Top number in a fraction?", a: "Numerator", h: "It tells you how many parts you have.", o: ["Numerator", "Denominator", "Factor", "Total"]}
+        ],
+        "Science": [
+            {q: "Trait that helps survival?", a: "Adaptation", h: "Like a polar bear's thick fur.", o: ["Adaptation", "Food Chain", "Climate", "Force"]},
+            {q: "Force pulling objects to Earth?", a: "Gravity", h: "This is why balls fall down, not up.", o: ["Friction", "Gravity", "Energy", "Magnetism"]},
+            {q: "Gas turning into liquid?", a: "Condensation", h: "Think of clouds forming or dew on grass.", o: ["Condensation", "Melting", "Boiling", "Wind"]},
+            {q: "Allows electricity to flow?", a: "Conductor", h: "Metals like copper are great at this.", o: ["Conductor", "Insulator", "Switch", "Glass"]},
+            {q: "Stops electricity flow?", a: "Insulator", o: ["Insulator", "Conductor", "Wire", "Battery"], h: "Rubber on a wire is an example."},
+            {q: "Liquid turning into gas?", a: "Evaporation", h: "Puddles disappearing on a sunny day.", o: ["Evaporation", "Freezing", "Rain", "Ice"]}
+        ]
+    },
     "5": {
         "ELA": [
             {q: "Examine carefully to understand?", a: "Analyze", h: "To break something down into parts to study it.", o: ["Analyze", "Describe", "Memorize", "Read"]},
             {q: "Facts that prove the truth?", a: "Evidence", h: "A detective looks for this to solve a case.", o: ["Opinion", "Evidence", "Topic", "Draft"]},
+            {q: "The main character in a story?", a: "Protagonist", h: "Usually the 'hero' we follow.", o: ["Protagonist", "Antagonist", "Narrator", "Sidekick"]},
+            {q: "The character opposing the hero?", a: "Antagonist", h: "Often the villain or the rival.", o: ["Antagonist", "Hero", "Ally", "Ghost"]},
             {q: "Most exciting part of story?", a: "Climax", h: "The 'peak' of the action mountain.", o: ["Climax", "Intro", "Theme", "Chapter"]},
             {q: "The author's attitude in the text?", a: "Tone", h: "Is the writer being serious, funny, or angry?", o: ["Tone", "Mood", "Voice", "Plot"]},
-            {q: "The character opposing the hero?", a: "Antagonist", h: "Often the villain or the rival.", o: ["Antagonist", "Hero", "Ally", "Ghost"]},
-            {q: "A story about someone's life written by another?", a: "Biography", h: "A true story of a famous person.", o: ["Biography", "Fiction", "Poem", "Drama"]}
+            {q: "Hints about what will happen later?", a: "Foreshadowing", h: "Subtle clues the author drops early on.", o: ["Foreshadowing", "Flashback", "Ending", "Climax"]},
+            {q: "A story about someone's real life?", a: "Biography", h: "A true book about another person.", o: ["Biography", "Fantasy", "Mystery", "Poem"]},
+            {q: "Language not meant to be literal?", a: "Figurative", h: "Using similes, metaphors, and idioms.", o: ["Figurative", "Exact", "Plain", "Boring"]},
+            {q: "Using symbols to represent ideas?", a: "Symbolism", h: "Like a dove representing peace.", o: ["Symbolism", "Rhyme", "Logic", "Fact"]},
+            {q: "Problem solved in a story?", a: "Resolution", h: "The final part where loose ends are tied.", o: ["Resolution", "Conflict", "Start", "Climax"]},
+            {q: "A story written by the person it's about?", a: "Autobiography", h: "The author writes about their own life.", o: ["Autobiography", "Biography", "Novel", "Essay"]},
+            {q: "The way an author writes?", a: "Style", h: "Their unique choice of words and structure.", o: ["Style", "Paper", "Ink", "Title"]},
+            {q: "An exaggerated statement?", a: "Hyperbole", h: "'I'm so hungry I could eat a horse!'", o: ["Hyperbole", "Fact", "Title", "Noun"]},
+            {q: "A message about life in a story?", a: "Theme", h: "The deeper meaning or moral.", o: ["Theme", "Plot", "Setting", "Character"]}
         ],
         "Math": [
             {q: "Letter for unknown number?", a: "Variable", h: "Usually 'x' or 'y' in an equation.", o: ["Variable", "Constant", "Exponent", "Formula"]},
-            {q: "3D space an object occupies?", a: "Volume", h: "How much water a bottle can hold.", o: ["Area", "Volume", "Mass", "Perimeter"]},
+            {q: "3D space an object occupies?", a: "Volume", h: "How much water can a bottle hold?", o: ["Area", "Volume", "Mass", "Perimeter"]},
             {q: "Average of a set of numbers?", a: "Mean", h: "Add them up and divide by the count.", o: ["Mean", "Median", "Mode", "Range"]},
+            {q: "Middle number in a sorted list?", a: "Median", h: "The 'middle child' of the data.", o: ["Median", "Mean", "Mode", "Total"]},
+            {q: "Value occurring most often?", a: "Mode", h: "Think of the most 'popular' number.", o: ["Mode", "Median", "Average", "Sum"]},
+            {q: "A comparison by division?", a: "Ratio", h: "Comparing two quantities, like 2:1.", o: ["Ratio", "Percent", "Sum", "Digit"]},
+            {q: "A fraction out of 100?", a: "Percentage", h: "Uses the % symbol.", o: ["Percentage", "Decimal", "Ratio", "Whole"]},
             {q: "A fixed value that doesn't change?", a: "Constant", h: "Opposite of a variable.", o: ["Constant", "Variable", "Letter", "X"]},
-            {q: "Bottom number of a fraction?", a: "Denominator", h: "Tells the total number of parts.", o: ["Numerator", "Denominator", "Whole", "Sum"]}
+            {q: "To write in simplest form?", a: "Simplify", h: "Reducing 4/8 to 1/2.", o: ["Simplify", "Expand", "Multiply", "Add"]},
+            {q: "The result of division?", a: "Quotient", h: "The final answer when you divide.", o: ["Quotient", "Remainder", "Factor", "Sum"]},
+            {q: "A number with only 2 factors?", a: "Prime", h: "Like 2, 3, 5, or 7.", o: ["Prime", "Composite", "Even", "Odd"]},
+            {q: "Numbers with more than 2 factors?", a: "Composite", h: "Like 4, 6, 8, or 9.", o: ["Composite", "Prime", "Zero", "One"]},
+            {q: "Result of multiplication?", a: "Product", h: "Multiply 5 times 5 to get this.", o: ["Product", "Sum", "Digit", "Factor"]},
+            {q: "Amount left over in division?", a: "Remainder", h: "What's left when it doesn't fit evenly.", o: ["Remainder", "Whole", "Part", "Decimal"]},
+            {q: "The distance from center to edge of circle?", a: "Radius", h: "Half of the diameter.", o: ["Radius", "Diameter", "Center", "Area"]}
         ],
         "Science": [
-            {q: "Tested educated guess?", a: "Hypothesis", h: "The start of a scientific experiment.", o: ["Conclusion", "Hypothesis", "Variable", "Data"]},
+            {q: "Tested educated guess?", a: "Hypothesis", h: "If [I do this], then [this] will happen.", o: ["Conclusion", "Hypothesis", "Variable", "Data"]},
             {q: "Plants making food from light?", a: "Photosynthesis", h: "Photo means 'light' and synthesis means 'making'.", o: ["Respiration", "Photosynthesis", "Digestion", "Solar"]},
-            {q: "Smallest block of life?", a: "Cell", h: "All living things are made of these.", o: ["Cell", "Atom", "Organ", "Tissue"]},
-            {q: "Anything that has mass and takes up space?", a: "Matter", h: "Solid, liquid, and gas are states of...", o: ["Matter", "Energy", "Void", "Sound"]},
-            {q: "Path around a star?", a: "Orbit", h: "The Earth's path around the Sun.", o: ["Orbit", "Axis", "Galaxy", "Rotation"]}
+            {q: "Smallest block of life?", a: "Cell", h: "Every living thing is made of these.", o: ["Cell", "Atom", "Organ", "Tissue"]},
+            {q: "Path around a star?", a: "Orbit", h: "The Earth's path around the Sun.", o: ["Orbit", "Axis", "Galaxy", "Rotation"]},
+            {q: "Anything that has mass and takes up space?", a: "Matter", h: "Solids, liquids, and gases are all...", o: ["Matter", "Energy", "Void", "Sound"]},
+            {q: "Changing from liquid to solid?", a: "Freezing", h: "What happens to water in a freezer.", o: ["Freezing", "Melting", "Boiling", "Vapor"]},
+            {q: "The study of living things?", a: "Biology", h: "The science of life.", o: ["Biology", "Geology", "Physics", "Chemistry"]},
+            {q: "A push or pull that changes motion?", a: "Force", h: "Gravity and friction are types of...", o: ["Force", "Mass", "Weight", "Speed"]},
+            {q: "Center of an atom?", a: "Nucleus", h: "Contains protons and neutrons.", o: ["Nucleus", "Shell", "Electron", "Void"]},
+            {q: "A group of atoms bonded together?", a: "Molecule", h: "H2O is a water...", o: ["Molecule", "Atom", "Cell", "Dust"]}
         ]
-    },
-    "1-2": { "ELA": [{q:"Sample 1-2 Question", a:"Ans", h:"Hint", o:["Ans","W1","W2","W3"]}], "Math":[], "Science":[] },
-    "3-4": { "ELA": [{q:"Sample 3-4 Question", a:"Ans", h:"Hint", o:["Ans","W1","W2","W3"]}], "Math":[], "Science":[] }
+    }
 };
 
-let allPool = [], activeQuestions = [], curIdx = 0, setNum = 1, totalSets = 0, canClick = true;
-let correctCount = 0, wrongCount = 0, hasMistakeInCurrentQuestion = false;
+let allPool = [];
+let activeQuestions = [];
+let curIdx = 0;
+let setNum = 1;
+let totalSets = 0;
+let canClick = true;
 
 function initQuiz() {
     const g = document.getElementById('grade').value;
     const s = document.getElementById('subject').value;
-    if(!database[g][s] || database[g][s].length === 0) { alert("Data coming soon for this level!"); return; }
-    
     allPool = [...database[g][s]].sort(() => Math.random() - 0.5);
     totalSets = Math.ceil(allPool.length / 5);
-    setNum = 1; correctCount = 0; wrongCount = 0;
-    updateScoreUI();
-    document.getElementById('score-board').classList.remove('hidden');
+    setNum = 1;
     startNewSet();
-}
-
-function updateScoreUI() {
-    document.getElementById('count-o').innerText = correctCount;
-    document.getElementById('count-x').innerText = wrongCount;
 }
 
 function startNewSet() {
@@ -147,7 +222,7 @@ function startNewSet() {
 }
 
 function showQuestion() {
-    canClick = true; hasMistakeInCurrentQuestion = false;
+    canClick = true;
     const data = activeQuestions[curIdx];
     document.getElementById('set-info').innerText = `Set ${setNum} of ${totalSets}`;
     document.getElementById('q-progress').innerText = `Question ${curIdx + 1} / ${activeQuestions.length}`;
@@ -155,6 +230,7 @@ function showQuestion() {
     document.getElementById('feedback').innerText = "";
     document.getElementById('hint-btn').style.display = "none";
     document.getElementById('hint-text').style.display = "none";
+    
     const box = document.getElementById('options-box');
     box.innerHTML = "";
     [...data.o].sort(() => Math.random() - 0.5).forEach(opt => {
@@ -170,10 +246,8 @@ function check(el, selected, correct) {
     if(!canClick) return;
     if(selected === correct) {
         canClick = false;
-        if (!hasMistakeInCurrentQuestion) correctCount++;
-        updateScoreUI();
         el.classList.add('correct');
-        document.getElementById('feedback').innerText = "Correct! 🏆";
+        document.getElementById('feedback').innerText = "Correct! Well done! 🏆";
         document.getElementById('feedback').style.color = "var(--success)";
         setTimeout(() => {
             curIdx++;
@@ -181,9 +255,8 @@ function check(el, selected, correct) {
             else showFinalResult();
         }, 1200);
     } else {
-        if (!hasMistakeInCurrentQuestion) { wrongCount++; hasMistakeInCurrentQuestion = true; updateScoreUI(); }
         el.classList.add('wrong');
-        document.getElementById('feedback').innerText = "Try again!";
+        document.getElementById('feedback').innerText = "Try again! You can do it.";
         document.getElementById('feedback').style.color = "var(--error)";
         document.getElementById('hint-btn').style.display = "block";
         setTimeout(() => el.classList.remove('wrong'), 800);
@@ -193,14 +266,16 @@ function check(el, selected, correct) {
 function showHint() {
     const data = activeQuestions[curIdx];
     const hintBox = document.getElementById('hint-text');
-    hintBox.innerHTML = `<strong>HINT:</strong> ${data.h || "Think carefully!"}`;
+    const hintContent = data.h ? data.h : `Starts with "${data.a[0]}" and has ${data.a.length} letters.`;
+    hintBox.innerHTML = `<strong>HINT:</strong> ${hintContent}`;
     hintBox.style.display = "block";
     document.getElementById('hint-btn').style.display = "none";
 }
 
 function showFinalResult() {
     document.getElementById('quiz-card').classList.add('hidden');
-    document.getElementById('result-card').classList.remove('hidden');
+    const resCard = document.getElementById('result-card');
+    resCard.classList.remove('hidden');
     const btn = document.getElementById('next-set-btn');
     if (setNum < totalSets) {
         btn.innerText = "Start Next Set";
