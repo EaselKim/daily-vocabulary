@@ -18,4 +18,172 @@
         button#start-btn:hover { background-color: #0c2461; }
 
         .quiz-area { flex: 1; padding: 40px; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; }
-        .quiz-card { background: white; padding: 40px; border-radius:
+        .quiz-card { background: white; padding: 40px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); max-width: 650px; width: 100%; display: none; position: relative; }
+        
+        .progress { margin-bottom: 20px; font-size: 0.9rem; color: #666; font-weight: bold; }
+        .question { font-size: 1.4rem; font-weight: bold; margin-bottom: 25px; color: #2c3e50; line-height: 1.4; }
+        
+        .option-item { background: #f8f9fa; margin-bottom: 12px; padding: 18px; border-radius: 10px; cursor: pointer; border: 2px solid transparent; transition: 0.2s; font-size: 1.1rem; }
+        .option-item:hover { background: #e8f0fe; border-color: #4a69bd; }
+        .option-item.correct { background: #d4edda; border-color: #28a745; color: #155724; }
+        .option-item.wrong { background: #f8d7da; border-color: #dc3545; color: #721c24; }
+
+        .result-screen { text-align: center; display: none; }
+        .welcome-msg { color: #7f8c8d; text-align: center; margin-top: 100px; }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>🎓 US Elementary Word Challenge</h1>
+</header>
+
+<div class="main-container">
+    <div class="sidebar">
+        <div class="select-group">
+            <label>Grade Level</label>
+            <select id="grade-select">
+                <option value="1-2">Grades 1-2</option>
+                <option value="3-4">Grades 3-4</option>
+                <option value="5">Grade 5</option>
+            </select>
+        </div>
+        <div class="select-group">
+            <label>Subject</label>
+            <select id="subject-select">
+                <option value="ELA">Literature (ELA)</option>
+                <option value="Math">Math</option>
+                <option value="Science">Science</option>
+            </select>
+        </div>
+        <button id="start-btn" onclick="startNewQuiz()">Start Quiz</button>
+    </div>
+
+    <div class="quiz-area">
+        <div id="welcome" class="welcome-msg">
+            <h2>Ready to learn?</h2>
+            <p>Select your grade and subject to begin your vocabulary journey!</p>
+        </div>
+
+        <div id="quiz-card" class="quiz-card">
+            <div id="progress" class="progress">Question 1 of 3</div>
+            <div id="question-text" class="question">Loading question...</div>
+            <div id="options" class="options-list"></div>
+        </div>
+
+        <div id="result-screen" class="quiz-card result-screen">
+            <h2>🎊 Amazing Job!</h2>
+            <p>You have mastered this set of vocabulary.</p>
+            <button id="start-btn" onclick="location.reload()" style="padding: 10px 20px; background: #4a69bd; color: white; border: none; border-radius: 5px; cursor: pointer;">Study Again</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // 각 과목당 3개씩 샘플 데이터를 구성했습니다.
+    const quizDatabase = {
+        "1-2": {
+            "ELA": [
+                { q: "Where and when a story takes place?", a: "Setting", opts: ["Setting", "Character", "Plot", "Author"] },
+                { q: "A person, animal, or creature in a story?", a: "Character", opts: ["Plot", "Character", "Setting", "Title"] },
+                { q: "The order in which things happen?", a: "Sequence", opts: ["Sequence", "Rhyme", "Detail", "Emotion"] }
+            ],
+            "Math": [
+                { q: "The total when two numbers are added?", a: "Sum", opts: ["Sum", "Difference", "Digit", "Equal"] },
+                { q: "The result of subtracting one number from another?", a: "Difference", opts: ["Sum", "Product", "Difference", "Angle"] },
+                { q: "Having the same value or amount?", a: "Equal", opts: ["Less", "Greater", "Pattern", "Equal"] }
+            ],
+            "Science": [
+                { q: "The place where an animal or plant lives?", a: "Habitat", opts: ["Orbit", "Habitat", "Gas", "Solid"] },
+                { q: "To watch something carefully to learn about it?", a: "Observe", opts: ["Guess", "Observe", "Sleep", "Run"] },
+                { q: "The stages a living thing goes through?", a: "Life Cycle", opts: ["Weather", "Season", "Life Cycle", "Energy"] }
+            ]
+        },
+        "3-4": {
+            "Math": [
+                { q: "The answer to a multiplication problem?", a: "Product", opts: ["Sum", "Product", "Quotient", "Fraction"] },
+                { q: "The answer to a division problem?", a: "Quotient", opts: ["Remainder", "Array", "Quotient", "Area"] },
+                { q: "A part of a whole number?", a: "Fraction", opts: ["Decimal", "Fraction", "Whole", "Multiple"] }
+            ]
+        }
+        // ... 다른 데이터도 이와 같은 형식으로 추가 가능
+    };
+
+    let currentQuestions = [];
+    let currentIdx = 0;
+
+    function startNewQuiz() {
+        const grade = document.getElementById('grade-select').value;
+        const subject = document.getElementById('subject-select').value;
+        
+        // 데이터가 없는 경우를 위한 방어 코드
+        if (!quizDatabase[grade] || !quizDatabase[grade][subject]) {
+            alert("This combination is coming soon! Please try Grade 1-2.");
+            return;
+        }
+
+        currentQuestions = quizDatabase[grade][subject];
+        currentIdx = 0;
+
+        document.getElementById('welcome').style.display = 'none';
+        document.getElementById('result-screen').style.display = 'none';
+        document.getElementById('quiz-card').style.display = 'block';
+        
+        showQuestion();
+    }
+
+    function showQuestion() {
+        const qData = currentQuestions[currentIdx];
+        document.getElementById('progress').innerText = `Question ${currentIdx + 1} of ${currentQuestions.length}`;
+        document.getElementById('question-text').innerText = qData.q;
+        
+        const optionsContainer = document.getElementById('options');
+        optionsContainer.innerHTML = '';
+
+        qData.opts.forEach(opt => {
+            const div = document.createElement('div');
+            div.className = 'option-item';
+            div.innerText = opt;
+            div.onclick = (e) => checkAnswer(e, opt, qData.a);
+            optionsContainer.appendChild(div);
+        });
+    }
+
+    function checkAnswer(event, selected, correct) {
+        const items = document.querySelectorAll('.option-item');
+        // 클릭 중복 방지
+        items.forEach(item => item.style.pointerEvents = 'none');
+
+        if (selected === correct) {
+            event.target.classList.add('correct');
+            // 1초 뒤에 다음 문제로 이동
+            setTimeout(() => {
+                currentIdx++;
+                if (currentIdx < currentQuestions.length) {
+                    showQuestion();
+                } else {
+                    showResult();
+                }
+            }, 1000);
+        } else {
+            event.target.classList.add('wrong');
+            // 틀렸을 경우 정답 표시 후 1.5초 뒤 다음으로 (혹은 다시 풀게 하려면 로직 수정 가능)
+            setTimeout(() => {
+                currentIdx++;
+                if (currentIdx < currentQuestions.length) {
+                    showQuestion();
+                } else {
+                    showResult();
+                }
+            }, 1500);
+        }
+    }
+
+    function showResult() {
+        document.getElementById('quiz-card').style.display = 'none';
+        document.getElementById('result-screen').style.display = 'block';
+    }
+</script>
+
+</body>
+</html>
